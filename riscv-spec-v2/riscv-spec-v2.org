@@ -1,0 +1,285 @@
+* RISC-V 分析
+
+** Chapter 1  Introduction
+
+*** 1.1 RISC-V ISA Overview
+
+最基本的整型 ISA ，任何微体系结构都必须实现它，也可添加扩展。
+
+- supervisor ['sju:pəvaizə]: n. 管理，管理员；
+- adequate ['ædikwit]: adj. 足够的，胜任的，满足需要的；
+- desirable [di'zaiərəbl]: adj. 出色的，合意的，令人满意的；
+- sufficient [sə'fiʃənt]: adj. 足够的。
+
+Subsets of the base integer ISA might be useful for pedagogical purposes, but the base has been defined such that there should be little incentive to subset a real hardware implementation beyond omitting support for misaligned memory accesses and treating all SYSTEM instructions as a single trap.
+
+**** "I"
+
+The base integer ISA is named "I" (prexed by RV32 or RV64 depending on integer register width), and contains integer computational instructions, integer loads, integer stores, and control-flow instructions, and is mandatory for all RISC-V implementations.
+
+**** "M"
+
+The standard integer multiplication and division extension is named "M", and adds instructions to multiply and divide values held in the integer registers.
+
+**** "A" 
+
+The standard atomic instruction extension, denoted by "A", adds instructions that atomically read, modify, and write memory for inter-processor synchronization.
+
+**** "F"
+
+The standard single-precision floating-point extension, denoted by "F", adds floating-point registers, single-precision computational instructions, and single-precision loads and stores.
+
+**** "D"
+
+The standard double-precision floating-point extension, denoted by "D", expands the floating-point registers, and adds double-precision computational instructions, loads, and stores.
+
+**** "G"
+
+An integer base plus these four standard extensions ("IMAFD") is given the abbreviation "G" and provides a general-purpose scalar instruction set.
+
+*** 1.2 Instruction Length Encoding
+ 
+- parcel ['pɑːs(ə)l]: n. 小包，包裹；
+- afterthought ['ɑ:ftəθɔ:t]: n. 时候的想法，后来添加的东西；
+- Perhaps more importantly: 或许更重要的是；
+- condense [kən'dens]: v. 压缩。
+
+The base RISC-V ISA has fixed-length 32-bit instructions that must be naturally aligned on 32-bit boundaries.
+基本 RISC-V 的指令长度是固定的32位，必须按32位对齐。
+
+The standard RISC-V encoding scheme is designed to support ISA extensions with variable-length instructions, where each instruction can be any number of 16-bit instruction parcels in length and parcels are naturally aligned on 16-bit boundaries.
+标准的 RISC-V 编码方案设计支持变长指令的 ISA 扩展，这些指令是任意数量个 16-bit指令块的长度，这些块是很自然地是按16-bit位对齐。
+
+The standard compressed ISA extension described in Chapter 13 reduces code size by providing compressed 16-bit instructions and relaxes the alignment constraints to allow all instructions (16 bit and 32 bit) to be aligned on
+any 16-bit boundary to improve code density.
+第13章描述的标准压缩 ISA 扩展，通过支持压缩的 16-bit 指令来减小代码大小，放宽对齐的限制以允许所有的指令（16位和32位）任意地按16位对齐来提高代码密度。
+
+[[file:img/riscv_instr_leng_encoding.png]] 
+
+1. 可选的16位压缩指令集扩展：指令的最低两位是 00， 01， 10；
+2. 基本的32位指令集：指令的最低两位是 11；
+3. 扩展的指令集编码超过32位的：额外的低序位设置为1；
+4. 48位：低五位（3*16，最低两位的11代表16位）设置为1；
+5. 64位：低六位（4*16，最低两位的11代表16位）设置为1；
+6. 80位：低七位（5*16，最低两位的11代表16位）设置为1；
+7. 大于80位且小于320位：低七位设置为1（要大于80位），低11到8位共4位（0000~1110），位数是 80+16*（0~14）；
+8. 大于等于 320位：低11位设置为 1；
+9. Encodings with 11 or more low-order opcode bits set to 1 are reserved for future longer instruction encodings.
+*注意：按16位对齐，所以都是16的整数倍*
+
+An implementation of the standard G ISA need only hold the most-significant 30 bits in instruction caches (a 6.25% saving). On instruction cache refills, any instructions encountered with either low bit clear should be recoded into illegal 30-bit instructions before storing in the cache to preserve illegal instruction trap behavior.
+标准 G（通用） 指令集的实现，只需在指令 Cache 中保存指令的最高30位的有效位（舍弃最低两位，节省了 6.25%（2/32=0.0625） 的空间）。在存到指令 Cache 之前，任何碰到任一低位的指令显然要重新编码成合法的30位指令，以防止非法指令自陷行为的发生。 *注意：* 如果支持超过 32位指令编码格式，32位标准指令编码格式的低五到第三位不能是 111。
+
+As described in Chapter 9, an implementation that does not require support for the standard compressed instruction extension can map 3 additional 30-bit instruction spaces into the 32-bit fixed-width format, while preserving support for standard >=32-bit instruction-set extensions. Further, if the implementation also does not need instructions >32-bits in length, it can recover a further four major opcodes.
+正如第9章讲到的，不需要支持标准压缩指令扩展的实现，能够映射额外的三个（最低位为 00，01，10，这三个原本是为了支持压缩指令扩展） 30位的指令到一个 32位定长的指令编码格式，同时保留了对于大于等于 32位的指令集扩展的支持。此外，如果这个实现也不需要长度大于 32位的指令，它能重新获得/使用更多的（a further）四个主要的操作码。 *疑问：为什么是四个？图1.1 中，32位的 bbb 不等于 111，应该是重新获得了一个操作码（bbb 等于 111）的时候*
+
+We consider it a feature that any length of instruction containing all zero bits is not legal, as this quickly traps erroneous jumps into zeroed memory regions.
+*疑问：不明白为什么这么说。*
+
+The base RISC-V ISA has a little-endian memory system, but non-standard variants can provide a big-endian or bi-endian memory system. Instructions are stored in memory with each 16-bit parcel stored in a memory halfword according to the implementation's natural endianness. Parcels comprising one instruction are stored at increasing halfword addresses, with the lowest addressed parcel holding the lowest numbered bits in the instruction specification, i.e, *instructions are always stored in a little-endian sequence of parcels regardless of the memory system endianness.*
+基本的 RISC-V ISA 有一个小端序的存储系统，但是非标准的变种可以提供大端序或者两者都支持的存储系统。 *疑问：理解不是十分透彻*
+
+We have to fix the order in which instruction parcels are stored in memory, independent of memory system endianness, to ensure that the length-encoding bits always appear first in halfword address order. This allows the length of a variable-length instruction to be quickly determined by an instruction fetch unit by examining only the first few bits of the first 16-bit instruction parcel. Once we had decided to fix on a little-endian memory system and instruction parcel ordering, this naturally led to placing the length-encoding bits in the LSB positions of the instruction format to avoid breaking up opcode fields.
+*疑问：理解不是十分透彻*
+
+#+NAME: RISCV
+#+BEGIN_SRC 
+    // Store 32-bit instruction in x2 register to location pointed to by x3.
+    sh x2, 0(x3) // Store low bits of instruction in first parcel.
+    srli x2, x2, 16 // Move high bits down to low bits, overwriting x2.
+    sh x2, 2(x3) // Store high bits in second parcel.
+#+END_SRC 
+
+Figure 1.2: Recommended code sequence to store 32-bit instruction from register to memory. Operates correctly on both big- and little-endian memory systems and avoids misaligned accesses when used with variable-length instruction-set extensions.
+*疑问：理解不是十分透彻*
+
+
+*** 1.3 Exceptions, Traps, and Interrupts
+
+- Exception: an unusual condition occurring at run time.
+- 异常：在运行时发生的异常（unusual）情况。
+
+- Trap: the synchronous transfer of control to a supervisor environment when caused by an exceptional condition occurring within a RISC-V thread.
+- 自陷：当在一个 RISC-V 线索里发生了异常的（exceptional）情况时，同步地把控制权转交给管理员环境（或说是管理模式）。
+
+- Interrupt: the asynchronous transfer of control to a supervisor environment caused by an event outside of the current RISC-V thread.
+- 中断：由当前 RISC-V 线索之外的事件导致的，异步地（随时都可能发生的）把控制权转交给管理员环境（或说是管理模式）。
+
+The instruction descriptions in following chapters describe conditions that raise an exception during execution. Whether and how these are converted into traps is dependent on the execution environment, though the expectation is that most environments will take a precise trap when an exception is signaled (except for floating-point exceptions, which, in the standard floating-point extensions, do not cause traps).
+在下面章节里的指令叙述中，描述了在执行过程中引起异常的情况。这些能否和如何被转换成自陷取决于执行的环境，尽管预期是当发出异常信号的时候，大多数环境下将会采取精确的自陷（除了浮点异常，这个在标准的浮点扩展里是不会导致自陷的）。
+
+Our use of "exception" and "trap" matches that in the IEEE-754 floating-point standard.
+我们这里使用的“异常”和“自陷”跟 IEEE-754 的浮点标准相匹配。
+
+** Chapter 2  RV32I Base Integer Instruction Set
+
+- commentary ['kɒmənt(ə)rɪ]: n. 注释，评注，说明。
+
+RV32I contains 47 unique instructions, though an implementation might cover
+the eight SCALL/SBREAK/RD* instructions with a single SYSTEM hardware instruction that
+always traps, reducing hardware instruction count to 40 total. RV32I can emulate almost any
+other ISA extension (except the A extension, which requires additional hardware support for
+atomicity).
+RV32I 包含了 47条唯一的指令，尽管一种实现可以用一条单独的系统硬件指令代替了 8条 SCALL/SBREAK/RD* 指令，硬件指令总数减少到总共 40条（47 - 8 + 1，一条代替了八条指令）。RV32I 能够模仿几乎任何其他 ISA 扩展（除了 A 扩展，这个需要额外的硬件支持原子性）。
+
+*** 2.1 Programmers' Model for Base Integer Subset
+
+[[file:img/riscv_user_level_base_int_regs.png]]
+
+这有 31个通用寄存器 x1-x31，保存的是整型数值。寄存器 x0 硬连线设置的常数 0。这没有硬连线设置的保存子程序返回地址链接的寄存器，但标准软件调用规范使用寄存器 x1 来保存调用的返回地址。XLEN 表示当前 x 寄存器的位宽（32位或是 64位）。
+
+另外还有一个用户能够看到的寄存器：程序计数器（PC）保存当前指令的地址。
+
+The number of available architectural registers can have large impacts on code size, performance, and energy consumption.
+可用的体系结构寄存器的数量对代码大小，性能以及能耗有很大的影响。
+
+*** 2.2 Base Instruction Formats
+
+- at the expense of: 以……为代价；
+- asymmetric [,æsɪ'metrɪk]: adj. 不对称的，非对称的。
+
+[[file:img/riscv_instr_formats.png]]
+
+In particular, the sign bit for all immediates is always in bit 31 of the instruction to speed sign-extension circuitry.
+特别地，所有立即数的符号在31号位上，以加速符号位拓展电路。
+
+Decoding register specifiers is usually on the critical paths in implementations, and so the instruction format was chosen to keep all register specifiers at the same position in all formats at the expense of having to move immediate bits across formats.
+寄存器描述符的译码通常是在实现的关键路径上，所以在全部的指令格式中保持所有的寄存器描述符在同样的位置，以必须跨格式移动立即数位为代价。
+
+In practice, most immediates are either small or require all XLEN bits. We chose an asymmetric immediate split (12 bits in regular instructions plus a special load upper immediate instruction with 20 bits) to increase the opcode space available for regular instructions. In addition, the ISA only has sign-extended immediates. We did not observe a benefit to using zero-extension for some immediates and wanted to keep the ISA as simple as possible.
+在实践中，大多数的立即数要么很小，要么需要寄存器全部的位数（XLEN bits）。我们选择一种非对称的分割方式（在规整的指令里的 12位，加上用一个特别的取高位（upper）立即数的指令获得的 20位）来增加规整指令操作码的可用空间。此外，这个 ISA只有符号拓展立即数。我们没有注意到针对一些立即数使用零扩展能得到什么好处，并希望尽可能地保持简单。
+
+*** 2.3 Immediate Encoding Variants
+
+- fanout [fænaut]: n. 扇出、展开；
+- scrambled ['skræmbl]: v. 使杂乱，扰乱；
+- negligible ['nɛɡlɪdʒəbl]: adj. 微不足道的，可以忽略的；
+- ahead of time: 提前，事先；
+
+[[file:img/riscv_instr_formats_var.png]] 
+
+[[file:img/riscv_imms.png]]
+
+Similarly, the only difference between the U and UJ formats is that the 20-bit immediate is shifted left by 12 bits to form U immediates and by 1 bit to form J immediates.
+相似地，U 格式和 UJ 格式之间仅有的差别是，这 20位立即数左移 12位形成了 U 格式的立即数，左移 1位形成了 J 格式的立即数。（PS：我之前理解“the 20-bit immediate”是立即数序号是 20的那一个比特位，后来观察图 2.3 和图 2.4 之后发现，指的是 U 类型和 UJ 类型指令里的一共 20位的立即数。）
+
+By rotating bits in the instruction encoding of B and J immediates instead of using dynamic hardware muxes to multiply the immediate by 2, we reduce instruction signal fanout and immediate mux costs by around a factor of 2.
+*疑问：理解不是十分透彻。从最后的 “around a factor of 2（大约？ 2倍）”推测出“rotating bits”指的是移位操作。*
+
+*** 2.4 Integer Computational Instructions
+
+*No integer computational instructions cause arithmetic exceptions.* We did not include special instruction set support for overflow checks on integer arithmetic
+operations. Most popular programming languages do not support checks for integer overflow, partly because most architectures impose a significant runtime penalty to check for overflow on integer arithmetic and partly because modulo arithmetic is sometimes the desired behavior.
+
+**** Integer Register-Immediate Instructions
+
+[[file:img/riscv_reg_imm_instrs_1.png]]
+
+ADDI 把符号位扩展后的 12位立即数存到寄存器 rs1。算数溢出被忽略，只是简单地取计算结果的低 32位。 ~ADDI rd, rs1, 0~ 被用来实现 ~MV rd, rs1~ 汇编伪指令。
+
+SLTI（set less than immediate）：当两个操作数都被看作是有符号数时，如果寄存器 rs1 的值小于符号位扩展后的立即数则将 rd 寄存器置 1，否则置 0.
+
+STLIU 跟 SLTI 相似，不过比较的数值视作无符号数（也就说，先符号位扩展立即数，然后在当作无符号数）。 *注意，* ~SLTIU rd, rs1, 1~ ，若 rs1 等于 0 ，rd 的值置为 1，否则为 0（汇编伪指令 ~SEQZ rd, rs~）。
+
+ANDI，ORI，XORI 是逻辑运算，对寄存器 rs1 和符号位扩展后的 12位立即数进行按位 *与* ， *或* ， *异或* 运算，把结果存到 rd 寄存器。 *注意：* ~XORI rd, rs1, -1~ 对寄存器 rs1 执行按位逻辑取反运算（汇编伪指令 ~NOT rd, rs~ ）
+
+b[[file:img/riscv_reg_imm_instrs_2.png]]
+
+移位量是常数的移位操作被编码成一种特殊的 I 格式。被移位的操作数存放在寄存器 rs1 上，移位量被编码在 I 型立即数的低五位字段里。右移的类型（算术或是逻辑）被编码在 I 型立即数的一个高位上（上图中看出是 imm[ 10 ]）。SLLI 是逻辑左移（低位补 0）；SRLI 是逻辑右移（高位补 0）；SRAI 是算术右移（高位补符号位）。
+
+[[file:img/riscv_reg_imm_instrs_3.png]]
+
+LUI（load upper immediate）被用来构建 32位常数，使用的是 U 型立即数。LUI 把 U 型立即数放到目的寄存器 rd 的高 20位上，低 12位补 0。
+
+AUIPC（add upper immediate to pc）被用来构建 PC 相对的地址，使用的是 U 型立即数。AUIPC 以低 12位补 0，高 20位是立即数的方式形成 32位偏移量，然后和 PC 相加，最后把结果保存在寄存器 rd。
+
+The AUIPC instruction supports two-instruction sequences to access arbitrary offsets from the PC for both control-flow transfers and data accesses. The combination of an AUIPC and the 12-bit immediate in a JALR can transfer control to any 32-bit PC-relative address, while an AUIPC plus the 12-bit immediate offset in regular load or store instructions can access any 32-bit PC-relative data address.
+
+The current PC can be obtained by setting the U-immediate to 0. Although a JAL +4 instruction could also be used to obtain the PC, it might cause pipeline breaks in simpler microarchitectures or pollute the BTB structures in more complex microarchitectures.
+
+**** Integer Register-Register Operations
+
+[[file:img/riscv_reg_reg_instrs.png]]
+
+RV32I 定义了几种算术 R格式的指令。所有指令读取源操作数寄存器 rs1 和 rs2，把运算结果写到寄存器 rd。 /funct7/ 和 /funct3/ 字段（这里的 7 和 3 表示字段的位数）选择运算类型。
+
+~ADD~ 和 ~SUB~ 分别执行加法和减法运算。忽略溢出并把结果的低 32位写到目的寄存器。~SLT~ 和 ~SLTU~ 分别执行有符号和无符号的比较，若 rs1 < rs2 则把 rd 置 1，否则置 0。 *注意：* ~SLTU rd, x0, rs2~ （x0 是 0号寄存器）若 rs2 不等于 0 把 rd 置 1，否则置 0（汇编伪指令 ~SNEZ rd, rs~ ）。 ~AND~ ， ~OR~ ， 和 ~XOR~ 执行按位逻辑操作。
+
+~SLL~ ， ~SRL~ 和 ~SRA~ 以寄存器 rs2 的低五位作为移位量，分别对寄存器 rs1 的值执行逻辑左移，逻辑右移和算术右移运算。
+
+**** NOP Instruction
+
+[[file:img/riscv_nop.png]]
+
+~NOP~ 指令不会改变任何用户可见的状态，除了增加 PC（except for advancing the pc）。 ~NOP~ 被编码成 ~ADDI x0, x0, 0~ 。
+
+NOPs can be used to align code segments to microarchitecturally significant address boundaries, or to leave space for inline code modifications. Although there are many possible ways to encode a NOP, we define a canonical NOP encoding to allow microarchitectural optimizations as well as for more readable disassembly output.
+
+*** 2.5 Control Transfer Instructions
+
+- auxiliary [ɔːɡ'zɪlɪəri]: adj. 辅助的，附加的；
+
+RV32I 提供两种控制转移类型的指令：无条件跳转和有条件的分支。在 RV32I 里控制转移指令没有体系结构上可见的延迟槽。
+
+**** Unconditional Jumps
+
+跳转链接（JAL，jump and link）指令使用的是 UJ 格式，这里的 J 型立即数编码有符号的是 2个字节整数倍的偏移量。符号位扩展后的偏移量跟 PC 的值相加形成跳转目标地址。因此无条件跳转（Jump）的范围是 ±1 MiB（[[https://zh.wikipedia.org/zh/Mebibyte][mebibyte]] ，2^10 字节，mebi 从单词“mega”和“binary”得来）。JAL 保存跟在 jump 后面的指令地址（PC + 4）到寄存器 rd。标准软件调用规范使用寄存器 x1 作为返回地址寄存器。
+
+Plain unconditional jumps (assembler pseudo-op J) are encoded as a JAL with rd=x0.
+纯粹的无条件跳转（汇编伪指令 J）被编码成 rd=x0 的JAL。（ *疑问：理解不是十分透彻* ） 
+
+[[file:img/riscv_jal.png]]
+
+伪直接跳转指令 JALR（jump and link register）使用的是 I 格式编码。目标地址是由 12位有符号 I 型立即数跟寄存器 rs1 相加，然后把结果的最低有效位置为 0（ *疑问：** 最后一步为什么要这么做？）。跟在 jump 后面的指令地址（PC + 4）到寄存器 rd。
+如果（链接寄存器的）结果不需要，寄存器 x0 被用作目的寄存器。
+
+[[file:img/riscv_jalr.png]]
+
+无条件跳转指令全都使用 PC 相对寻址帮助对与位置无关代码的支持（因为相对与 PC，当前指令的地址，所以跟具体代码的位置，或说是代码的绝对位置无关）。 ~JALR~ 指令能够使用两条指令序列（一条是存放跳转目标的绝对地址到寄存器，一条是 JALR 本身）在 32位的绝对地址范围内任意跳转。 首先用 ~LUI~ 指令把分支目标地址的高 20位存到寄存器 rs1，再用 ~JALR~ 指令把分支目标地址的低位添加到寄存器里。同样地，先用 ~AUIPC~ 再用 ~JALR~ 能够在 32位的 PC 相对寻址范围内任意跳转。
+
+*注意：* JALR 指令不会像条件分支指令把 12位立即数看作是 2个字节的整倍数。这避免了多一种硬件上的立即数格式，也使得 ~JALR~ 重用了跟全局装数（load）相同的重定位格式。实际上，大多数 ~JALR~ 的使用要么是一个零立即数，要么是跟 ~LUI~ 或 ~AUIPC~ 成对出现，所以稍微地减小范围影响不大。
+
+~JALR~ 指令忽略掉计算后目标地址的最低位。既稍微简化了硬件，也允许函数指针（function pointers）的低位被用来存放辅助信息。尽管在这种情况会潜在地稍微损失错误检查，实际上跳到不正确的指令地址通常将会很快地引起异常。
+
+返回地址预测栈（Return-address prediction stack）是高性能取指（读取指令）部件的常见特性。We note that rd and rs1 can be used to guide an implementation's instruction-fetch prediction logic, indicating whether JALR instructions should push (rd=x1), pop (rd=x0, rs1=x1), or not touch (otherwise) a return-address stack. Similarly, a JAL instruction should push the return address onto the return-address stack only when rd=x1. 
+
+当使用了 ~rs1=x0~ 的 ~JALR~ ，这被用来实现在地址空间的 ±2 KiB 范围内单个指令子程序调用，这会被用来实现快速调用小的 runtime 库。
+
+**** Conditional Branches
+
+- synthesize ['sinθisaiz]: v. 合成；
+- pressure ['preʃə]: v. 对……施加压力；
+
+所有的分支指令使用 SB 指令格式。12位 B 型立即数以 2的整数倍编码成有符号偏移量，跟当前 PC 相加得到目标地址。有条件分支的范围是 ±4 KiB。
+
+[[file:img/riscv_branch_instrs.png]]
+
+分支指令比较两个寄存器。 ~BEQ~ 和 ~BNE~ 分别当 rs1 和 rs2 相等或是不相等时分支发生。 ~BLT~ 和 ~BLTU~ 当分别使用有符号和无符号比较时，rs1 小于 rs2 的话分支发生。 ~BGE~ 和 ~BGEU~ 当分别使用有符号和无符号比较时，rs1 大于或等于 rs2的话分支发生。 *注意：* ~BGT~ ， ~BGTU~ , ~BLE~ ，和 ~BLEU~ 分别能够通过互换 ~BLT~ ， ~BLTU~ ， ~BGE~ ， ~BGEU~ 的操作来合成。
+
+软件应该被优化成大多数情况下是顺序执行代码，加上很少发生的分支跳转的代码序列。软件也应该至少在第一次遇到分支时假设向后的分支预测将会发生而向前的分支预测不发生。动态分支预测应该很快地获知任何可预测的分支行为。
+
+不像其他一些体系结构，RISC-V 跳转（rd=x0 的 JAL）指令应该总是被用作无条件分支来替代条件总是真的有条件分支指令。RISC-V 跳转也是 PC 相对寻址并且支持比分支更宽的偏移量范围，这并不会对有条件分支的预测表施加压力。
+
+条件分支包括算术比较两个寄存器的操作，而不是使用条件码，或者只是拿一个寄存器跟零去比较，或者是比较两个寄存器是否相等。组合的比较分支指令适合规整的流水线，避免了额外的条件码状态或是使用临时寄存器，减小了静态代码大小和动态取指令的传输量。Another point is that comparisons against zero require non-trivial circuit delay(especially after the move to static logic in advanced processes) and so are almost as expensive as arithmetic magnitude compares. Another advantage of a fused compare-and-branch instruction is that branches are observed earlier in the front-end instruction stream, and so can be predicted earlier. There is perhaps an advantage to a design with condition codes in the case where multiple branches can be taken based on the same condition codes, but we believe this case to be relatively rare.
+
+我们考虑过但并没有在指令编码中包含静态分支 hints。这减小了动态预测器的压力，但为了更好的结果需要更多的指令编码空间和软件 profiling，如果 production 运行的和 profiling 运行不匹配，就使得性能变差。
+
+We considered but did not include conditional moves or predicated instructions, which can effectively replace unpredictable short forward branches. Conditional moves are the simpler of the two, but are difficult to use with conditional code that might cause exceptions (memory accesses and floating-point operations). Predication adds additional flag state to a system, additional instructions to set and clear flags, and additional encoding overhead on every instruction. Both conditional move and predicated instructions add complexity to out-of-order microarchitectures, adding an implicit third source operand due to the need to copy the original value of the destination architectural register into the renamed destination physical register if the predicate is false. Also, static compile-time decisions to use predication instead of branches can result in lower performance on inputs not included in the compiler training set, especially given that unpredictable branches are rare, and becoming rarer as branch prediction techniques improve.
+
+We note that various microarchitectural techniques exist to dynamically convert unpredictable short forward branches into internally predicated code to avoid the cost of flushing pipelines on a branch mispredict and have been implemented in commercial processors. The simplest techniques just reduce the penalty of recovering from a mispredicted short forward branch by only flushing instructions in the branch shadow instead of the entire fetch pipeline, or by fetching instructions from both sides using wide instruction fetch or idle instruction fetch slots. More complex techniques for out-of-order cores add internal predicates on instructions in the branch shadow, with the internal predicate value written by the branch instruction, allowing the branch and following instructions to be executed speculatively and out-of-order with respect to other code.
+
+*** 2.6 Load and Store Instructions
+
+RV32I 是 load-store 风格的体系结构，访问存储器只用 load 和 store 指令，算术指令只会对 CPU 寄存器进行运算。RV32I 提供按字节寻址和小端序的 32位用户地址空间。执行环境将会定义哪部分的地址空间能合法访问。
+
+[[file:img/riscv_load_store.png]]
+
+~load~ 和 ~store~ 指令在寄存器和存储器直接传输值。 ~load~ 被编码成 I 格式指令， ~store~ 指令是 S 格式。有效的按字节寻址的地址（effective byte address）通过把寄存器 rs1 和 符号位扩展后的 12位偏移量相加获得。取数指令从存储器复制值到寄存器 rd，存数指令是把寄存器 rs2 的值复制到存储器。
+
+~LW~ 指令从存储器取 32位值放到寄存器 rd。 ~LH~ 从存储器取 16位的值，然后符号位扩展成 32位后再存到寄存器 rd。 ~LHU~ 从存储器取 16位的值，然后零扩展成 32位后再存到寄存器 rd。 ~LB~ 和 ~LBU~ 类似地被定义成针对 8位的值。 ~SW~ ， ~SH~ 和 ~SB~ 指令从寄存器 rs2 的低位取出 32位，16位和 8位的值保存到存储器。
+
+为了更好的性能，对于所有取数和存数指令的有效地址应该是自然地对每一中数据类型（也就是说，32位的访问是按四字节边界对齐，16位的访问是按两字节对齐）对齐。基本 ISA 支持非对齐的访问，但这可能会运行非常缓慢，这取决于具体实现。更进一步，自然地对齐的取数和存数保证原子性地执行，而非对齐的不会这样，因此（非对齐的)需要额外的同步来确保原子性。
+
+当移植遗留的代码时偶尔需要到非对齐的访问，当使用任何形式的 packed-SIMD 扩展时，针对于很多应用程序，非对齐的访问是至关重要的。我们的对于借助规整的取数和装数指令来支持非对齐访问的基本原理，是为了简化添加非支持对齐的硬件。一个选项会不允许在基本的 ISA 非对齐的访问，然后提供一些支持非对齐访问的单独 ISA，要么是特殊的指令帮助软件处理非对齐访问，要么是针对非对齐访问的新硬件寻址模式。使用特殊的指令很困难，使 ISA 变得复杂，且经常会加入新的处理器状态（例如，SPARC VIS 对齐地址偏移量寄存器）或者使访问现有的处理器状态变得复杂（例如，MIPS LWL/LWR 写入部分寄存器）。除此之外，对于面向循环的（loop-oriented）packed-SIMD 代码，当操作数不对齐的额外开销促使软件根据操作数的对齐提供多种循环的形式，这就使得代码生成变得复杂和添加了循环启动的开销。新非对齐的硬件寻址模式采用相对大的指令编码空间或是需要非常简单的寻址模式（例如，只有间接的寄存器）。
+
+我们不强制要求非对齐访问的原子性，这使得简单的实现能够只用一个机器自陷和软件处理程序（software handler）来处理非对齐访问。如果提供硬件支持非对齐访问，软件可以通过简单地使用普通的取数和存数指令来利用这个特性。硬件然后能自动地根据运行时访问是否对齐来优化访问。
