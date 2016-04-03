@@ -1,0 +1,266 @@
+* The Future of Microprocessors Notes
+** Para. 1
+*** 生词
+- promise ['prɒmɪs]: n. 前途
+- exponentially [,ekspəu'nenʃəli]: 指数级地
+- on a course described by Moore's law: 按摩尔定律描述的方式发展
+- harness ['hɑːnɪs]: n. 利用
+- extract [ˈekstrækt]: v. 榨取，提取
+- depict [dɪ'pɪkt]: v. 描述
+*** 句子
+- Chip multiprocessors' promise of huge performance gains is now a reality.
+
+** Para. 2
+*** 生词
+- continual[kən'tɪnjʊəl] quest[kwest]: 不断的追求/寻求
+- pursue [pə'sjuː]: 继续进行
+- virtually ['vɜːtjʊəlɪ]: 实际上
+- monolithic [mɒnə'lɪθɪk]: adj. 庞大的
+*** 句子
+- hardware designers have essentially been limited to enhancements that have maintained this abstraction for decades.
+  that 修饰的是 enhancements 还是 designers? 
+
+** Para. 3
+*** 生词 
+- proportional [prə'pɔːʃ(ə)n(ə)l]: adj. 成比例/正比的
+*** 句子
+- Pipelining of individual instruction execution into a sequence of stages has allowed designers to increase clock rates as instructions have been sliced into larger numbers of increasingly small steps, which are designed to reduce the amount of logic that needs to switch during every clock cycle.
+  logic that needs to switch：需要切换的逻辑，指的是什么呢？
+  
+** Para. 4
+*** 生词
+- meanwhile ['miːnwaɪl]: adv. 与此同时
+- with respect to: 相对于
+
+** Para. 5
+*** 生词
+- flourish ['flʌrɪʃ]: vi. 兴盛
+- illusion [ɪ'l(j)uːʒ(ə)n]: n. 错觉
+- map...to...: 映射到
+- untuned [,ʌn'tju:nd]: adj. 不调谐的
+- albeit [ɔːl'biːɪt]: conj. 虽然，即使
+
+** Para. 6 
+
+*** 生词
+- effective [ɪ'fektɪv]: adj. 有效的，起作用的
+- steep rise: 急剧上升
+- tapering off: 逐渐减小
+
+*** 句子
+- There is a flat region before instruction-level parallelism was pursued intensely
+这里的 pursued 理解为 实行，intensely 是极度地，意译为 大力采用
+  
+** Para. 7
+*** 生词
+- complicating matters further: 使问题更复杂的是
+- overwhelm [əʊvə'welm]: vt. 盖过，压倒
+- afford [ə'fɔːd]: vt. 负担得起，承担
+- forsake [fə'seɪk]: vt. 放弃
+- compete effectively: 有效/有力地竞争
+
+*** 句子
+- These trends have slowed the advance in processor performance somewhat
+somewhat 是有点的意思，但整句话意思是？
+
+** Para. 8
+
+*** 生词
+- promise ['prɒmɪs]: vt. 允诺，保证
+- the course of: 在...过程中
+- shrunk [ʃrʌŋk]: v. 收缩, shrink 的过去分词
+- subsequent ['sʌbsɪkw(ə)nt]: adj. 随后的，后来的
+
+*** 句子
+- As processors were pipelined and made increasingly superscalar over the course of the past two decades, typical high-end microprocessor power went from less than a watt to over 100 watts.
+made increasingly superscalar: 不断增长的超标量。the course of the past two decades: 在过去的 20年里
+
+** Para. 9 
+
+*** 生词
+- heat sink: 散热器
+- moderate ['mɒd(ə)rət]: adj. 适度的，中等的
+- monstrous ['mɒnstrəs]: adj. 巨大的
+- dedicated ['dedɪkeɪtɪd]: adj. 专用的
+- airflow: 气流
+- exotic [ɪg'zɒtɪk]: adj. 外来的，新采用的
+
+** Para. 10 
+*** 生词
+- ceiling ['siːlɪŋ]: 天花板，上限
+- limit to: 限于
+- focus away from: 不再关注
+
+*** 句子
+- The combination of limited instruction parallelism suitable for superscalar issue, practical limits to pipelining, and a “power ceiling” limited by practical cooling limitations has limited future speed increases within conventional processor cores to the basic Moore’s law improvement rate of the underlying transistors.
+... 的三个方面把传统处理器核未来速度的提高限制于只能靠底层晶体管摩尔定律提高速率。
+或者是： 受到...三个方面的限制，传统处理器核未来速度的提高只能靠底层晶体管摩尔定律提高速率。
+
+** Para. 11 
+*** 生词
+- radical ['rædɪk(ə)l]: adj. 根本的
+- stratify ['strætɪfaɪ]: v. 分层
+- from the point of view of: 从...的角度
+
+** Throughput Performance Improvement
+
+*** Para. 1
+**** 生词
+- with the rise of: ...的崛起
+- a multitude['mʌltɪtjuːd] of: 大量的
+- spread across: 传遍
+- match to: 匹配，满足
+
+*** Para. 2
+**** 生词
+- switch hub: 交换机，交换集线器
+- power supply: 电源
+
+*** Para. 3
+**** 生词
+- pressure ['preʃə]: 压力
+- electric bills: 电费
+- staggering ['stæɡərɪŋ]: 巨大的
+- in response: 作为回应，应对方法是
+- adopt [ə'dɒpt]: vt. 采用
+- denser: 密集的
+- blade [bleɪd]: n. 刀片
+- power-hungry: adj. 高耗电的
+
+*** Para. 4
+**** 生词
+- die: The individual rectangular sections that are cut from a wafer, more informally known as chips. 管芯，俗称芯片
+- formerly ['fɔːməlɪ]: adv. 以前，原来
+- the amount of: ...的数量
+- in addition to: 除...之外
+- off-chip: 片外
+
+*** Para. 5
+**** 生词
+- bothered ['bʌðəd]: adj. 烦恼的，感到讨厌的
+- a fraction of: 一小部分，零点几
+- drop [drɒp]: 下降，减少
+- take advantage of: 从...受益/获得好处
+
+*** Para. 6
+**** 生词
+- take up to twice as long: 需要两倍的时间
+- contention [kən'tenʃ(ə)n]: n. 争用
+**** 句子
+- When a two-way CMP replaces a uniprocessor, it is
+possible to achieve essentially the same or better through-
+put on server-oriented workloads with just half of the
+original clock speed. Each request may take up to twice
+as long to process because of the reduced clock rate.
+相当于把单个 CPU 拆成两个组成 CMP，因此可以同时处理两个，但是速度是原理的一半。
+
+*** Para. 7
+**** 句子
+- half of the voltage squared = a quarter of the power
+电压一半的平方等于功耗的四分之一，因为上文说功耗等于电压的平方
+
+*** Para. 8
+**** 生词
+- extreme [ɪk'striːm]: n. 极端，最大程度
+- in flight at once: 同时运行/处理
+ 
+**** 句子
+- For throughput-oriented workloads, even more power/performance and performance/chip area can be achieved by taking the “latency is unimportant” idea to its extreme and building the CMP with many small cores instead of a few large ones.
+
+这里的 more 应该是“更好”的意思吧，这样 power/performance 的值越小， 每单位性能所花费的功耗更好
+
+*** Para. 9
+**** 生词
+- demonstrate ['demənstreɪt]: v. 证明，表明
+- compensate ['kɒmpenseɪt] for: 因为...而抵消/补偿
+- occupy ['ɒkjʊpaɪ]: vt. 占据
+**** 句子
+- but this latency slowdown is more than compensated for by the
+这里是被动，被...很大程度上抵消/补偿了。...大大补偿/抵消了延迟的缓慢
+
+*** Para. 10
+**** 生词
+- be traded for: 被用来交换...
+- a fair amount of: 大量
+
+*** Para. 11
+**** 生词
+- send off: 发出
+- overall: 总的来说
+
+** Latency Performance Improvement
+
+*** Para. 1
+**** 生词
+- fall in this category ['kætɪg(ə)rɪ]: 属于这一类
+- computation-bound: 受计算能力限制的
+- simulation [,sɪmjʊ'leɪʃən]: n. 仿真
+
+*** Para. 2
+**** 生词
+- function: 工作，运转
+- dense-matrix: 密集矩形的
+- in relation to: 与...相比
+
+*** Para. 3
+**** 生词
+- minority [maɪ'nɒrɪtɪ; mɪ-]: adj. & n. 少数的，少数
+- bother['bɒðə] to do: 受累去做
+- invest [ɪn'vest]: v. 花费，投入
+- exceed [ɪk'siːd; ek-]: vt. 超过
+
+*** Para. 4
+**** 生词
+- exhaustion [ɪg'zɔːstʃ(ə)n; eg-]: n. 耗尽，消耗
+- dispatch [dɪˈspætʃ]: vt. 分派
+- dimension [dɪ'menʃ(ə)n; daɪ-]: n. 方面，维度
+- embrace [ɪm'breɪs; em-]: vt. 拥抱
+
+*** Para. 5
+**** 生词
+- conveniently [kən'vi:njəntli]: adv. 便利地，方便地
+- handful ['hæn(d)fʊl; -f(ə)l]: 少量，少数
+- panacea [,pænə'si:ə] n. 灵丹妙药
+
+*** Para. 6
+**** 生词
+- transactional [træn'zækʃnəl]: 事务处理的
+- serialize ['siəriəlaiz]: v. 序列化
+
+*** Para. 7
+**** 生词
+- tightly coupled: 紧耦合的
+- traumatic [trɔː'mætɪk; traʊ-]: 创伤的
+- paradigm ['pærədaɪm]: 范式
+- shift [ʃɪft]: 转变
+- feasible ['fiːzɪb(ə)l]: adj. 可行的
+- topic ['tɒpɪk]: n. 课题
+
+** Hardware Adventages
+
+*** Para. 1
+**** 生词
+- stamping down: 冲压
+- accommodate [ə'kɒmədeɪt]: 容纳
+- minor tweak: 微调
+- externally [eks'tə:nəli]: 外表上
+- even as: ?
+
+*** Para. 2
+**** 生词
+- significant [sɪg'nɪfɪk(ə)nt]: adj. 显著的
+- amortize [ə'mɔ:taɪz]: vt. 摊销，分摊
+- vary ['veərɪ]: v. 改变
+
+** An Inevitable Transition
+
+*** Para. 1
+**** 生词
+- inevitable [ɪn'evɪtəb(ə)l]: adj. 必然的
+- make inroads into the marketplace: 打入市场
+- out of the box: 开箱即用，立即可用
+
+*** Para. 2
+**** 生词
+- viewed another way: 另一方面
+- harness ['hɑːnɪs]: vt. 利用 
